@@ -1,0 +1,1307 @@
+{
+  "name": "M25 - Lerneinheit 07 - Aufgabe 1 Erweiterung Angebotserfassung inkl. Protokollierung & Fehlerbehandlung",
+  "nodes": [
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mimeType }}",
+                    "rightValue": "=application/pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "fd6c5870-52fd-4b5a-b5e0-3b1ee867aa12"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PDF"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "a5c5e2c3-f834-4ea3-a69c-f21e719acf8b",
+                    "leftValue": "={{ $json.mimeType }}",
+                    "rightValue": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "DOCX"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "55b0acb0-a5f2-4405-a5cf-c56f8dafbe14",
+                    "leftValue": "={{ $json.mimeType }}",
+                    "rightValue": "image/png",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "IMAGE/PNG"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -80,
+        160
+      ],
+      "id": "741b355d-70b5-40dd-b8c5-7eae76cf2912",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "FileType",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        160,
+        0
+      ],
+      "id": "68b2a7aa-60b1-45c9-9bb7-33275c94184e",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsCode": "let results = [];\n\nfor (const item of $input.all()) {\n  for (const key of Object.keys(item.binary || {})) {\n    const file = item.binary[key];\n\n    results.push({\n      json: {\n        fileName: file.fileName,\n        mimeType: file.mimeType,\n        fileExtension: file.fileExtension\n      },\n      binary: {\n        FileType: file\n      }\n    });\n  }\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -992,
+        160
+      ],
+      "id": "418b0fb4-1589-4f67-9224-a3d1a4052e4c",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "binaryPropertyName": "FileType",
+        "options": {}
+      },
+      "type": "n8n-nodes-docxtotext.docxToText",
+      "typeVersion": 1,
+      "position": [
+        160,
+        176
+      ],
+      "id": "afae3893-c10d-4c0c-aef1-6c693d9712ad",
+      "name": "DOCX to Text"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3.1-flash-lite",
+          "mode": "list",
+          "cachedResultName": "models/gemini-3.1-flash-lite"
+        },
+        "text": "Lies den vollständigen Text dieses Angebots aus dem Bild aus.\nÜbernimm alle erkennbaren Angaben möglichst vollständig und wortgetreu.\nErfinde keine fehlenden Informationen.",
+        "inputType": "binary",
+        "binaryPropertyName": "FileType",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        160,
+        352
+      ],
+      "id": "4784343a-db4f-474e-80a2-a2166ec19146",
+      "name": "Analyze an image"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return {\n  text: $json.content.parts[0].text\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        352
+      ],
+      "id": "c0cb329f-20a6-48ef-9ce4-645f545af29e",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        576,
+        464
+      ],
+      "id": "f9012784-f696-4a67-ad0c-69b54bf849c6",
+      "name": "Google Gemini Chat Model1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=\nDu bist ein KI-Assistent für die strukturierte Erfassung von Angeboten.\n\nAUFGABE\n\nAnalysiere den folgenden Angebotstext vollständig und übertrage alle relevanten Informationen in das vorgegebene JSON-Schema.\n\nZiel ist eine originalgetreue, einheitliche und nachvollziehbare Datenbasis, mit der ein nachgelagerter KI-Agent unterschiedliche Angebote fachlich fundiert vergleichen kann.\n\nArbeite unabhängig von Dokumentaufbau, Gewerk, Anbieter und Formulierung. Erkenne die Bedeutung und Zusammenhänge der Informationen aus dem jeweiligen Dokument.\n\n1. ORIGINALTREUE UND VOLLSTÄNDIGKEIT\n\n- Verwende ausschließlich Informationen aus dem vorliegenden Angebot.\n- Erfinde, schätze oder ergänze keine fehlenden Angaben.\n- Übernimm Namen, Datumsangaben und Leistungsbezeichnungen unverändert.\n- Verändere keine Preise, Mengen, Einheiten oder Angebotsbedingungen.\n- Berechne keine fehlenden Beträge und verteile keine Gesamtpreise auf Einzelpositionen.\n- Bewahre alle für einen späteren Angebotsvergleich relevanten Informationen.\n- Unterscheide belegte Angaben von fehlenden oder unklaren Angaben.\n- Vermeide Doppelungen, ohne relevante Informationen wegzulassen.\n\n2. ERFASSUNG DER ANGEBOTSDATEN\n\nExtrahiere folgende Angaben entsprechend dem JSON-Schema:\n\n- Anbieter\n- Angebotsdatum\n- Projektbezeichnung\n- einzelne angebotene Leistungen\n- Menge und Einheit je Position\n- Einheitspreis je Position\n- Positionsgesamtbetrag je Position\n- Zwischensumme\n- Mehrwertsteuerbetrag\n- Gesamtpreis\n- Ausführungszeitraum\n- besondere Hinweise\n\nErfasse eine Projektbezeichnung nur, wenn sie eindeutig als solche erkennbar ist. Ein Angebotsbetreff, Gewerk oder Leistungstitel ist nicht automatisch eine Projektbezeichnung.\n\n3. LEISTUNGEN UND POSITIONEN\n\nErkenne die tatsächlich angebotenen Leistungen anhand des gesamten Dokumentinhalts.\n\n- Erfasse ausdrücklich unterscheidbare Leistungen grundsätzlich als separate Positionen, unabhängig davon, ob sie in Tabellen, Aufzählungen oder Fließtext vorkommen.\n- Übernimm die ursprüngliche Leistungsbezeichnung ausschließlich in das Feld \"leistung\".\n- Ergänze im Feld \"leistung\" keine Mengen, Einheiten, Preise oder selbst formulierten Erläuterungen.\n- Zerlege zusammenhängende Originalbezeichnungen nicht künstlich.\n- Fasse getrennt erkennbare Leistungen nicht zu neu formulierten Positionen zusammen.\n- Werden konkrete Teilleistungen separat erfasst, erfasse eine übergeordnete Gesamtbeschreibung nicht zusätzlich, wenn dieselben Leistungen dadurch doppelt erscheinen.\n- Wenn ausschließlich eine Gesamtleistung erkennbar ist, erfasse diese mit ihrer ursprünglichen Bezeichnung.\n- Sind bestimmte Tätigkeiten nur erläuternde Bestandteile einer Gesamtleistung und nicht als eigenständige Position erkennbar, bewahre diese Informationen unter \"besondere_hinweise\".\n- Entscheide anhand der Bedeutung und des dokumentierten Leistungsumfangs, nicht anhand einzelner Schlüsselwörter.\n\n4. MENGEN UND EINHEITSPREISE\n\n- Erfasse eine ausdrücklich genannte Menge zusammen mit ihrer Einheit in \"menge_einheit\".\n- Übernimm die ursprüngliche Einheit unverändert.\n- Erfasse einen ausdrücklich genannten Preis pro Einheit als Zahl in \"einheitspreis\".\n- Verwechsle Einheitspreise nicht mit Positionsgesamtbeträgen.\n- Ordne Mengen und Einheitspreise ausschließlich der jeweiligen Leistungsposition zu.\n- Wenn keine eindeutige Menge oder Einheit angegeben ist, lasse \"menge_einheit\" weg.\n- Wenn kein eindeutiger Einheitspreis angegeben ist, lasse \"einheitspreis\" weg.\n- Berechne keine fehlenden Mengen oder Einheitspreise.\n\n5. PREISE UND STEUERN\n\nUnterscheide bei jeder Preisangabe zwischen:\n- dem ausdrücklich genannten Geldbetrag,\n- seiner Zuordnung zu einer einzelnen Position oder zum gesamten Angebot,\n- seiner Verbindlichkeit und den zugehörigen Bedingungen.\n\nGESAMTPREIS\n\n- Erfasse jeden eindeutig auf das gesamte Angebot bezogenen Geldbetrag im Feld \"gesamtpreis\".\n- Erkenne Gesamtpreise anhand ihrer Bedeutung im Dokument, unabhängig von bestimmten Formulierungen.\n- Erfasse auch ausdrücklich genannte ungefähre, geschätzte oder unverbindliche Gesamtpreise als Zahlen in \"gesamtpreis\".\n- Ein Preis darf nicht allein deshalb fehlen, weil seine endgültige Höhe noch unsicher ist.\n- Übernimm ausschließlich den tatsächlich genannten Zahlenbetrag. Berechne oder schätze keinen Ersatzbetrag.\n- Dokumentiere Einschränkungen zur Preisverbindlichkeit, Preisänderungen oder zur Abrechnung nach tatsächlichem Aufwand zusätzlich unter \"besondere_hinweise\".\n- Eine unverbindliche Preisangabe darf nicht als verbindlicher Festpreis dargestellt werden.\n- Wenn kein Gesamtpreis eindeutig angegeben oder zugeordnet werden kann, lasse \"gesamtpreis\" vollständig weg.\n\nPOSITIONSPREISE\n\n- Verwende für \"preis\" den ausdrücklich einer Position zugeordneten Positionsgesamtbetrag.\n- Wenn zu einer Position nur ein eindeutig zugeordneter Preis angegeben ist, übernimm diesen als \"preis\", sofern es sich nicht ausdrücklich um einen Einheitspreis handelt.\n- Wenn Menge, Einheitspreis und Positionsgesamtbetrag angegeben sind, verwende den ausdrücklich genannten Positionsgesamtbetrag.\n- Besteht ein Angebot aus einer einzigen eindeutig beschriebenen Gesamtleistung, darf deren Positionspreis dem Gesamtpreis entsprechen, wenn sich der Betrag eindeutig auf diese Gesamtleistung bezieht.\n- Bei mehreren eigenständigen Positionen darf ein gemeinsamer Gesamtpreis nicht auf einzelne Positionen verteilt werden.\n- Erfinde und berechne keine fehlenden Positionspreise.\n\nSTEUERN UND ZWISCHENSUMMEN\n\n- Unterscheide Positionsgesamtbeträge, Zwischensummen, Steuerbeträge und Gesamtpreise.\n- Übernimm ausdrücklich genannte Zwischensummen in \"zwischensumme\".\n- Übernimm ausdrücklich genannte Mehrwertsteuerbeträge in \"mehrwertsteuer\".\n- Übernimm ausdrücklich genannte Mehrwertsteuersätze und Angaben zur Netto- oder Bruttobasis zusätzlich unter \"besondere_hinweise\".\n- Berechne keine fehlenden Steuersätze, Steuerbeträge oder sonstigen Beträge.\n\n6. AUSFÜHRUNGSZEITRAUM UND HINWEISE\n\n- Erfasse ausdrücklich genannte Angaben zu Ausführungsbeginn, Dauer und Ausführungszeitraum in \"ausfuehrungszeitraum\".\n- Verwechsle Ausführungszeiten nicht mit Lieferfristen oder Angebotsgültigkeiten.\n- Erfasse in \"besondere_hinweise\" zusätzliche relevante Informationen wie Ausschlüsse, Zusatzkosten, enthaltene Leistungen, Wartung, Lieferzeiten, Angebotsgültigkeit, Preisvorbehalte und steuerliche Besonderheiten.\n- Nicht separat erfasste enthaltene Teilleistungen müssen erhalten bleiben.\n- Bewahre Informationen, die den Leistungsumfang, die Preisverbindlichkeit oder die Vergleichbarkeit beeinflussen.\n- Verwende keine eigenen Bewertungen oder Empfehlungen.\n\nVERBINDLICHE REGEL ZUR TRENNUNG VON DATEN UND HINWEISEN\n\nJede Information ist entsprechend ihrer fachlichen Bedeutung dem dafür vorgesehenen Feld zuzuordnen.\n\nDas Feld \"besondere_hinweise\" enthält ausschließlich relevante Zusatzinformationen, die nicht bereits vollständig in anderen Feldern abgebildet sind.\n\nFür Geldbeträge gilt insbesondere:\n\n- Sobald ein Geldbetrag in einem strukturierten Zahlenfeld erfasst wurde, darf derselbe Betrag nicht nochmals in \"besondere_hinweise\" erscheinen.\n- Das gilt für Einheitspreise, Positionspreise, Zwischensummen, Mehrwertsteuerbeträge und Gesamtpreise.\n- Entferne aus den Hinweisen nur die bereits strukturiert erfassten Geldbeträge und deren unnötige Wiederholungen.\n- Bewahre sämtliche zugehörigen Einschränkungen, Bedingungen und Bedeutungszusammenhänge.\n- Bei ungefähren oder unverbindlichen Preisen gehören die genannten Beträge in das zutreffende Preisfeld und die Angaben zur Unsicherheit ausschließlich in \"besondere_hinweise\".\n- Formuliere Hinweise bei Bedarf knapp und sachlich um, ohne ihre ursprüngliche Bedeutung zu verändern oder Informationen hinzuzufügen.\n- Übernimm keine vollständigen Textpassagen, wenn diese lediglich bereits strukturierte Werte wiederholen.\n- Wiederhole auch Anbieter, Angebotsdatum, Projektbezeichnung, Leistungsbezeichnungen, Mengen oder Ausführungszeiträume nicht unnötig in \"besondere_hinweise\".\n- Enthaltene Teilleistungen dürfen in den Hinweisen stehen, wenn sie nicht bereits als eigenständige Positionen ausgegeben wurden.\n- Bewahre ausdrücklich genannte Steuersätze, Netto-/Bruttoangaben und sonstige relevante Angebotsbedingungen.\n\nPrüfe vor der Ausgabe besonders, ob \"besondere_hinweise\" noch Geldbeträge enthält, die bereits in einem strukturierten Zahlenfeld stehen. Wenn ja, entferne ausschließlich diese redundanten Betragsangaben und erhalte die zugehörigen Bedingungen.\n\n7. FEHLENDE UND UNKLARE ANGABEN\n\n- Verwende für fehlende Textangaben einen leeren String \"\".\n- Lasse optionale numerische Felder vollständig weg, wenn kein eindeutig zugehöriger Wert angegeben ist.\n- Verwende bei fehlenden numerischen Angaben weder null noch 0.\n- Wenn der Preis einer Leistung nicht eindeutig zugeordnet werden kann, erfasse die Leistung ohne \"preis\".\n- Unterscheide zwischen einem nicht genannten Betrag und einem genannten, aber unverbindlichen Betrag.\n- Dokumentiere relevante Unklarheiten, Widersprüche oder Einschränkungen sachlich unter \"besondere_hinweise\".\n- Triff keine unbelegten Annahmen.\n\n8. AUSGABE\n\n- Gib ausschließlich die strukturierte Ausgabe gemäß dem vorgegebenen JSON-Schema zurück.\n- Verwende exakt die im Schema definierten Feldnamen.\n- Gib numerische Beträge als Zahlen ohne Währungssymbole oder Tausendertrennzeichen aus.\n- Die technische Darstellung darf den ursprünglichen Betrag nicht verändern.\n- Erhalte die ursprüngliche Reihenfolge der Leistungspositionen, soweit erkennbar.\n- Prüfe vor der Ausgabe die vollständige und korrekte Zuordnung aller Informationen sowie die Vermeidung unnötiger Doppelungen.\n- Gib keine zusätzlichen Erklärungen, Bewertungen oder Markdown-Formatierungen aus.\n\nANGEBOT:\n\n{{ $json.text }}\n",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        576,
+        176
+      ],
+      "id": "8f68b2ba-e729-4e66-ab96-dbdbfd9bd8bb",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "=\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"anbieter\": {\n      \"type\": \"string\"\n    },\n    \"angebotsdatum\": {\n      \"type\": \"string\"\n    },\n    \"projektbezeichnung\": {\n      \"type\": \"string\"\n    },\n    \"positionen\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"leistung\": {\n            \"type\": \"string\"\n          },\n          \"menge_einheit\": {\n            \"type\": \"string\"\n          },\n          \"einheitspreis\": {\n            \"type\": \"number\"\n          },\n          \"preis\": {\n            \"type\": \"number\"\n          }\n        },\n        \"required\": [\n          \"leistung\"\n        ]\n      }\n    },\n    \"zwischensumme\": {\n      \"type\": \"number\"\n    },\n    \"mehrwertsteuer\": {\n      \"type\": \"number\"\n    },\n    \"gesamtpreis\": {\n      \"type\": \"number\"\n    },\n    \"ausfuehrungszeitraum\": {\n      \"type\": \"string\"\n    },\n    \"besondere_hinweise\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"anbieter\",\n    \"angebotsdatum\",\n    \"projektbezeichnung\",\n    \"positionen\",\n    \"ausfuehrungszeitraum\",\n    \"besondere_hinweise\"\n  ]\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        720,
+        400
+      ],
+      "id": "fd434483-bfbc-4672-b3d2-8a735a033ec6",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list"
+        },
+        "title": "={{ $json.anbieter }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Name|title",
+              "title": "={{ $json.anbieter }}"
+            },
+            {
+              "key": "Datum|date",
+              "includeTime": false,
+              "date": "={{ $json.datum.split('.').reverse().join('-') }}",
+              "timezone": "Europe/Berlin"
+            },
+            {
+              "key": "Projekt|rich_text",
+              "textContent": "={{ $json.projekt }}"
+            },
+            {
+              "key": "Position|rich_text",
+              "textContent": "={{ $json.leistung }}"
+            },
+            {
+              "key": "Menge / Einheit|rich_text",
+              "textContent": "={{ $json.menge_einheit }}"
+            },
+            {
+              "key": "Einheitspreis|number",
+              "numberValue": "={{ $json.einheitspreis }}"
+            },
+            {
+              "key": "Positionspreis|number",
+              "numberValue": "={{ $json.positionspreis }}"
+            },
+            {
+              "key": "Gesamtpreis|number",
+              "numberValue": "={{ $json.gesamtpreis }}"
+            },
+            {
+              "key": "Hinweise|rich_text",
+              "textContent": "={{ $json.hinweise }}"
+            },
+            {
+              "key": "DateiHash|rich_text",
+              "textContent": "={{ $json.dateiHash }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        1136,
+        176
+      ],
+      "id": "58432b7f-29ef-409b-ba2d-0044d1a6f8ae",
+      "name": "Create a database page",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst ergebnis = [];\nconst eingaben = $input.all();\n\nfor (let i = 0; i < eingaben.length; i++) {\n  const item = eingaben[i];\n  const angebot = item.json.output ?? item.json;\n\n  // Ursprungsdatei eindeutig zuordnen\n  const datei = $('Hash-Abgleich mit Notion').itemMatching(i).json;\n\n  const dateiname = datei.fileName ?? \"\";\n  const dateiHash = datei.FileHash ?? \"\";\n\n  if (!dateiname || !dateiHash) {\n    throw new Error(\n      `Dateiname oder SHA-256-Hash fehlt bei Eingabe ${i + 1}`\n    );\n  }\n\n  // Angebotsbezogene Hinweise zusammenstellen\n  const hinweise = [];\n\n  if (angebot.besondere_hinweise) {\n    hinweise.push(angebot.besondere_hinweise);\n  }\n\n  if (angebot.ausfuehrungszeitraum) {\n    hinweise.push(\n      \"Ausführungszeitraum: \" + angebot.ausfuehrungszeitraum\n    );\n  }\n\n  if (angebot.zwischensumme !== undefined &&\n      angebot.zwischensumme !== null) {\n    hinweise.push(\n      \"Zwischensumme: \" + angebot.zwischensumme + \" €\"\n    );\n  }\n\n  if (angebot.mehrwertsteuer !== undefined &&\n      angebot.mehrwertsteuer !== null) {\n    hinweise.push(\n      \"Mehrwertsteuerbetrag: \" + angebot.mehrwertsteuer + \" €\"\n    );\n  }\n\n  // Jede Leistungsposition einzeln ausgeben\n  for (const position of angebot.positionen ?? []) {\n    ergebnis.push({\n      json: {\n        dateiname: dateiname,\n        dateiHash: dateiHash,\n\n        anbieter: angebot.anbieter ?? \"\",\n        datum: angebot.angebotsdatum ?? \"\",\n        projekt: angebot.projektbezeichnung ?? \"\",\n        leistung: position.leistung ?? \"\",\n\n        menge_einheit: position.menge_einheit ?? \"\",\n        einheitspreis: position.einheitspreis ?? null,\n        positionspreis: position.preis ?? null,\n\n        gesamtpreis: angebot.gesamtpreis ?? null,\n        hinweise: hinweise.join(\"; \")\n      },\n      pairedItem: { item: i }\n    });\n  }\n}\n\nreturn ergebnis;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        928,
+        176
+      ],
+      "id": "d79c0539-afe8-451e-9f63-1996f8d5ca05",
+      "name": "Code in JavaScript - Aufteilung Positionen"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -656,
+        -1008
+      ],
+      "id": "e62fd0fd-6c16-4561-abe3-02d6f588dc20",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        -432,
+        -1008
+      ],
+      "id": "0a0d4f2a-7f83-413c-ae5b-647b8998db56",
+      "name": "Get many database pages"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        -704
+      ],
+      "id": "58448df5-4d19-4eaa-8bcc-4e9804c7f4b7",
+      "name": "Google Gemini Chat Model"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst angebote = new Map();\n\nfor (const item of $input.all()) {\n  const daten = item.json;\n\n  const anbieter = daten.property_name ?? daten.name ?? \"\";\n  const datum = daten.property_datum?.start ?? \"\";\n  const projekt = daten.property_projekt ?? \"\";\n  const gesamtpreis = daten.property_gesamtpreis ?? null;\n  const hinweise = daten.property_hinweise ?? \"\";\n\n  // Vorhandene Angebotsnummer aus Hinweisen erkennen\n  const angebotsnummer =\n    hinweise.match(/Angebotsnummer:\\s*([^;,]+)/i)?.[1]?.trim() ?? \"\";\n\n  // Gruppierung anhand der vorhandenen Angebotsinformationen\n  const schluessel = JSON.stringify([\n    anbieter,\n    datum,\n    projekt,\n    angebotsnummer,\n    gesamtpreis,\n    hinweise\n  ]);\n\n  // Angebot einmalig anlegen\n  if (!angebote.has(schluessel)) {\n    angebote.set(schluessel, {\n      anbieter,\n      angebotsdatum: datum,\n      projekt,\n      angebotsnummer,\n      gesamtpreis,\n      hinweise,\n      positionen: []\n    });\n  }\n\n  const angebot = angebote.get(schluessel);\n\n  // Einzelne Leistungsposition übernehmen\n  const leistung = daten.property_position ?? \"\";\n\n  if (leistung) {\n    angebot.positionen.push({\n      leistung,\n      menge_einheit: daten.property_menge_einheit ?? \"\",\n      einheitspreis: daten.property_einheitspreis ?? null,\n      positionspreis: daten.property_positionspreis ?? null\n    });\n  }\n}\n\n// Alle Angebote in einem einzigen Item zusammenfassen\nreturn [\n  {\n    json: {\n      angebote: Array.from(angebote.values())\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        -1008
+      ],
+      "id": "cd374591-4b55-4d69-9bf4-b71ad6bfcd9a",
+      "name": "Code in JavaScript - Angebotspos zusammenfassen"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=\nDu bist ein unabhängiger KI-Assistent für die fachliche Auswertung und den Vergleich von Angeboten eines Bauunternehmens.\n\nAUFGABE\n\nAnalysiere sämtliche übergebenen Angebote und erstelle eine sachliche, nachvollziehbare Auswertung mit Stärken, Schwächen, Auffälligkeiten und begründeten Empfehlungen.\n\nDie Angebote können unterschiedliche Projekte, Gewerke, Leistungsumfänge, Preisarten und Angebotsbedingungen betreffen.\n\nArbeite unabhängig von Anbieter, Gewerk, Dokumentaufbau und Formulierung.\n\n1. ANGEBOTE EINORDNEN\n\n- Berücksichtige sämtliche übergebenen Angebote.\n- Ordne Angebote anhand ihrer Projektzugehörigkeit und ihres tatsächlichen Leistungsumfangs fachlich sinnvollen Vergleichsgruppen zu.\n- Erkenne ähnliche Leistungen auch bei unterschiedlichen Bezeichnungen.\n- Unterscheide zwischen gut, eingeschränkt und nicht ausreichend vergleichbaren Angeboten.\n- Die Zugehörigkeit zum gleichen Gewerk bedeutet nicht automatisch, dass die Leistungsumfänge gleichwertig sind.\n- Vergleiche Angebote unterschiedlicher Projekte nicht als direkte Alternativen.\n- Fehlende Projektangaben dürfen nicht durch Vermutungen ergänzt werden.\n- Wenn eine eindeutige Zuordnung nicht möglich ist, berücksichtige das Angebot in einer geeigneten separaten Gruppe.\n- Auch einzelne Angebote ohne geeignete Vergleichspartner müssen berücksichtigt werden.\n- Erstelle die Vergleichsgruppen dynamisch anhand der tatsächlichen Angebotsdaten. Verwende keine fest vorgegebenen Gewerke oder Gruppennamen.\n\n2. EINZELBEWERTUNG\n\nBewerte jedes Angebot anhand folgender Kriterien:\n\n- Anbieter und Gesamtpreis, soweit vorhanden\n- Wesentliche angebotene Leistungen\n- Erkennbare Stärken\n- Erkennbare Schwächen oder Einschränkungen\n- Fehlende oder unklare Informationen\n- Besondere Angebotsbedingungen\n\nUnterscheide ausdrücklich zwischen dokumentierten Eigenschaften und fachlichen Schlussfolgerungen.\n\nEine fehlende Angabe bedeutet nicht automatisch, dass eine bestimmte Leistung ausgeschlossen ist.\n\nStelle sicher, dass jedes übergebene Angebot genau einer Vergleichsgruppe zugeordnet wird.\n\n3. ANGEBOTSVERGLEICH\n\nVergleiche fachlich zusammengehörende Angebote hinsichtlich:\n\n- Gesamtpreis und vorhandenen Positionspreisen\n- Dokumentiertem Leistungsumfang\n- Enthaltenen und ausdrücklich ausgeschlossenen Leistungen\n- Ausführungszeitraum\n- Preisverbindlichkeit und Preisvorbehalten\n- Besonderen Bedingungen und möglichen Zusatzkosten\n\nEin niedrigerer Preis bedeutet nicht automatisch ein besseres Angebot.\n\nPrüfe vor jeder vergleichenden Bewertung, ob die dokumentierten Leistungsumfänge ausreichend übereinstimmen.\n\nSind die Leistungsumfänge unterschiedlich oder unvollständig beschrieben, kennzeichne die Vergleichbarkeit als eingeschränkt.\n\nSind Angebote nicht ausreichend vergleichbar, dürfen keine unbegründeten Rangfolgen oder Preis-Leistungs-Bewertungen erstellt werden.\n\n4. PREISE UND PREISVERBINDLICHKEIT\n\nUnterscheide sorgfältig zwischen:\n\n- Ausdrücklich verbindlichen Preisen\n- Pauschalangeboten\n- Unverbindlichen Richtpreisen\n- Geschätzten oder ungefähren Preisen\n- Abrechnung nach tatsächlichem Aufwand\n- Preisen mit ausdrücklich genannten Änderungsvorbehalten\n- Preisen ohne eindeutige Aussage zur Verbindlichkeit\n\nVERBINDLICHE REGELN:\n\n- Ein Pauschalangebot ist nicht automatisch ein garantierter Festpreis.\n- Ein genannter Gesamtpreis ist nicht automatisch verbindlich.\n- Fehlt eine Aussage zur Preisverbindlichkeit, darf diese nicht behauptet werden.\n- Ein unverbindlicher Preis bedeutet Kostenunsicherheit, belegt aber nicht automatisch spätere Nachforderungen.\n- Preisänderungsrisiken dürfen nur anhand dokumentierter Bedingungen bewertet werden.\n- Ausdrücklich genannte Materialpreisvorbehalte sind bei der Bewertung zu berücksichtigen.\n- Unterscheide ausdrücklich genannte Netto- und Bruttopreise.\n- Ist die steuerliche Behandlung unklar, kennzeichne diese Unsicherheit.\n- Vergleiche Preise unterschiedlicher oder unbekannter Steuerbasis nur unter entsprechendem Vorbehalt.\n- Berechne keine fehlenden Preise.\n- Zähle Gesamtpreise nicht mehrfach.\n\n5. AUFFÄLLIGKEITEN UND RISIKEN\n\nErkenne insbesondere:\n\n- Auffällig niedrige oder hohe Preise innerhalb ausreichend vergleichbarer Angebotsgruppen\n- Fehlende oder unklare Preisangaben\n- Unverbindliche Preisangaben\n- Ausdrücklich genannte Preisänderungsvorbehalte\n- Unterschiedliche oder unklare Leistungsumfänge\n- Ausdrücklich ausgeschlossene Leistungen\n- Fehlende oder unklare Ausführungszeiträume\n- Widersprüche und relevante Informationslücken\n\nUnterscheide zwischen:\n\n- Nachweisbaren Auffälligkeiten\n- Plausiblen Risiken aufgrund dokumentierter Bedingungen\n- Offenen Fragen wegen fehlender Informationen\n\nBehaupte keine marktüblichen Preise oder Risiken, für die keine ausreichende Datengrundlage vorliegt.\n\n6. EMPFEHLUNGEN\n\nFormuliere für jede Vergleichsgruppe eine nachvollziehbare Einschätzung.\n\n- Berücksichtige Preis, Leistungsumfang und Angebotsbedingungen gemeinsam.\n- Begründe jede Empfehlung anhand konkreter dokumentierter Eigenschaften.\n- Bevorzuge ein Angebot nicht allein wegen des niedrigsten Preises.\n- Stelle ausdrücklich genannte Vorteile und Nachteile gegenüber.\n- Kennzeichne Empfehlungen als vorläufig, wenn relevante Angaben fehlen.\n- Rate nur dann von einem Angebot ab, wenn die dokumentierten Nachteile oder Risiken dies ausreichend begründen.\n- Wenn keine belastbare Empfehlung möglich ist, benenne die offenen Fragen.\n- Sind Angebote fachlich nicht ausreichend vergleichbar, darf keine unbegründete Empfehlung ausgesprochen werden.\n- Bei Einzelangeboten ohne Vergleichspartner ist ausschließlich eine Einzelbewertung möglich.\n- Unterscheide zwischen einer begründeten Präferenz und einer endgültigen Vergabeentscheidung.\n\nDie Auswertung dient als Entscheidungshilfe und ersetzt keine abschließende fachliche Prüfung durch das Unternehmen.\n\n7. VERBINDLICHE ALLGEMEINE REGELN\n\n- Verwende ausschließlich die übergebenen Angebotsdaten.\n- Erfinde, ergänze oder schätze keine fehlenden Angaben.\n- Verändere keine Preise, Mengen oder Leistungsbeschreibungen.\n- Bewahre die ursprüngliche Bedeutung sämtlicher Angebotsbedingungen.\n- Interpretiere fehlende Informationen nicht als nachgewiesene Nachteile oder Ausschlüsse.\n- Unterscheide konsequent zwischen belegten Tatsachen, fachlichen Einschätzungen und offenen Fragen.\n- Vermeide unbelegte Aussagen über Festpreise, Preissicherheit und Preis-Leistungs-Verhältnisse.\n- Erstelle keine pauschale Gesamtrangliste über unterschiedliche Projekte oder Gewerke.\n- Berücksichtige sämtliche Angebote vollständig und ohne Doppelzählung.\n- Formuliere sachlich, verständlich und auf Deutsch.\n\n8. STRUKTURIERTE AUSGABE\n\nGib ausschließlich die strukturierte Ausgabe entsprechend dem verbundenen JSON-Schema zurück.\n\nErstelle ein JSON-Objekt mit dem Feld \"vergleiche\".\n\nDieses Feld enthält ein Array mit einem Eintrag pro fachlich sinnvoller Vergleichsgruppe.\n\nVerwende für jeden Eintrag exakt folgende Felder:\n\n\"vergleichsgruppe\":\nFachlich passende Bezeichnung der Vergleichsgruppe.\nBerücksichtige dabei das Gewerk beziehungsweise den Leistungsbereich.\nDie Bezeichnung muss auch bei bislang unbekannten Gewerken sinnvoll gebildet werden.\n\n\"projekt\":\nProjektbezeichnung der Vergleichsgruppe.\nVerwende ausschließlich ausdrücklich dokumentierte Projektzuordnungen.\nWenn keine eindeutige Projektzuordnung vorliegt, verwende einen leeren String \"\".\n\n\"anbieter\":\nNenne sämtliche Anbieter dieser Vergleichsgruppe mit ihren jeweiligen Gesamtpreisen, soweit vorhanden.\nKennzeichne ungefähre oder unverbindliche Preisangaben entsprechend.\nVerwende eine übersichtliche, durch Semikolon getrennte Darstellung.\n\n\"bewertung\":\nErstelle eine kompakte, aber fachlich aussagekräftige Auswertung der Vergleichsgruppe.\nBerücksichtige dabei alle enthaltenen Angebote.\nNenne wesentliche Leistungsmerkmale sowie erkennbare Stärken und Schwächen der einzelnen Anbieter.\nBeschreibe außerdem, ob und in welchem Umfang die Angebote fachlich vergleichbar sind.\n\n\"auffaelligkeiten\":\nFasse die wesentlichen Auffälligkeiten, Risiken, Preisvorbehalte und offenen Fragen der Vergleichsgruppe zusammen.\nOrdne auffällige Angaben den betreffenden Anbietern zu.\nWenn keine relevanten Auffälligkeiten erkennbar sind, schreibe \"Keine wesentlichen Auffälligkeiten erkennbar.\"\n\n\"empfehlung\":\nFormuliere eine kurze, fachlich begründete Empfehlung innerhalb der Vergleichsgruppe.\nNenne konkrete Anbieter nur dann als bevorzugt, wenn die vorliegenden Informationen dies ausreichend rechtfertigen.\nBei eingeschränkter Vergleichbarkeit kennzeichne die Empfehlung als vorläufig.\nWenn keine belastbare Empfehlung möglich ist, erläutere kurz, welche Informationen für eine Entscheidung fehlen.\nBei Einzelangeboten ohne Vergleichspartner darf keine vergleichende Anbieterempfehlung ausgesprochen werden.\n\nAUSGABEREGELN:\n\n- Gib ausschließlich gültige strukturierte Daten entsprechend dem vorgegebenen Schema aus.\n- Verwende exakt die definierten Feldnamen.\n- Alle sechs Felder jeder Vergleichsgruppe müssen vorhanden sein.\n- Verwende für sämtliche Felder Strings.\n- Gib keine zusätzlichen Felder aus.\n- Gib keine zusätzlichen Erklärungen außerhalb der strukturierten Ausgabe aus.\n- Verwende keine Markdown-Codeblöcke.\n- Erzeuge so viele Vergleichsgruppen, wie fachlich erforderlich sind.\n- Erfinde keine zusätzlichen Angebote oder Anbieter.\n- Prüfe vor der Ausgabe, ob jedes übergebene Angebot genau einmal berücksichtigt wurde.\n- Bewahre relevante Unterschiede der Angebote.\n- Vermeide unnötige Wiederholungen.\n- Die Ausgabe muss zum verbundenen Structured Output Parser passen.\n\nANGEBOTSDATEN:\n\n{{ JSON.stringify($json.angebote) }}\n",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        0,
+        -1008
+      ],
+      "id": "d5d135cd-82a3-4fed-a60d-c82bfa00f444",
+      "name": "AI Agent-Vergleich"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"vergleiche\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"vergleichsgruppe\": {\n            \"type\": \"string\"\n          },\n          \"projekt\": {\n            \"type\": \"string\"\n          },\n          \"anbieter\": {\n            \"type\": \"string\"\n          },\n          \"bewertung\": {\n            \"type\": \"string\"\n          },\n          \"auffaelligkeiten\": {\n            \"type\": \"string\"\n          },\n          \"empfehlung\": {\n            \"type\": \"string\"\n          }\n        },\n        \"required\": [\n          \"vergleichsgruppe\",\n          \"projekt\",\n          \"anbieter\",\n          \"bewertung\",\n          \"auffaelligkeiten\",\n          \"empfehlung\"\n        ]\n      }\n    }\n  },\n  \"required\": [\n    \"vergleiche\"\n  ]\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        144,
+        -800
+      ],
+      "id": "5bcf1fbd-b499-49e0-8515-eea814bdca9b",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output.vergleiche",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        368,
+        -1008
+      ],
+      "id": "475d2f5c-f382-4895-babf-21620c377cfb",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list"
+        },
+        "title": "={{ $json.vergleichsgruppe }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Projekt|rich_text",
+              "textContent": "={{ $json.projekt }}"
+            },
+            {
+              "key": "Anbieter|rich_text",
+              "textContent": "={{ $json.anbieter }}"
+            },
+            {
+              "key": "Bewertung|rich_text",
+              "textContent": "={{ $json.bewertung }}"
+            },
+            {
+              "key": "Auffälligkeiten|rich_text",
+              "textContent": "={{ $json.auffaelligkeiten }}"
+            },
+            {
+              "key": "Empfehlung|rich_text",
+              "textContent": "={{ $json.empfehlung }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        592,
+        -1008
+      ],
+      "id": "625eb83e-acaf-422a-8c82-64a26418dff6",
+      "name": "Create a database Angebotsvergleich"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -1392,
+        160
+      ],
+      "id": "4c4ebbc1-a58b-4ce9-a20a-71cbac209b15",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/files/M25_Dateitypentest/*",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        -1200,
+        160
+      ],
+      "id": "d909c9fc-e168-457c-9efd-0b9b9d28a11d",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "binaryData": true,
+        "binaryPropertyName": "FileType",
+        "dataPropertyName": "FileHash"
+      },
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        304
+      ],
+      "id": "f4b1c076-3e2a-4bcb-a6f2-594a9070e444",
+      "name": "Crypto"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -624,
+        176
+      ],
+      "id": "9bc754ca-e3e6-4bd6-acd3-ba5b7cae8ce0",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "memoryKey": {
+          "__rl": true,
+          "value": "M25_Angebote",
+          "mode": "list"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "typeVersion": 1.4,
+      "position": [
+        784,
+        -336
+      ],
+      "id": "84e8b2cb-0510-4533-9d73-c2cbd0197df6",
+      "name": "Simple Vector Store"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        784,
+        -144
+      ],
+      "id": "e2ac67f4-f70a-4ce1-b4e8-eeefc3a8ec6a",
+      "name": "Embeddings Google Gemini"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        832,
+        16
+      ],
+      "id": "af440cb8-15a2-4489-879a-63b31f24f514",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d92fa5c7-1b55-4b7a-a332-384d5e9f7e3d",
+              "name": "text",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        576,
+        -160
+      ],
+      "id": "66dd0246-0795-42e4-b4f4-3a323c4fd98c",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        -1456,
+        -1008
+      ],
+      "id": "c8965b7d-73e0-4ef9-938f-a6c3bf212b60",
+      "name": "When chat message received"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Durchsuche die Wissensdatenbank mit den gespeicherten Angeboten, um Fragen zu Anbietern, angebotenen Leistungen, Preisen, Ausführungszeiträumen und besonderen Angebotsbedingungen anhand der Originaldokumente zu beantworten.",
+        "memoryKey": {
+          "__rl": true,
+          "value": "M25_Angebote",
+          "mode": "list",
+          "cachedResultName": "M25_Angebote"
+        },
+        "topK": 6
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "typeVersion": 1.4,
+      "position": [
+        -1168,
+        -704
+      ],
+      "id": "e318a473-6509-46d3-90db-65d51fd63ecc",
+      "name": "Simple Vector Store1"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -1168,
+        -528
+      ],
+      "id": "de4c8e6c-b18e-4c3b-a4e5-ecffece4fa47",
+      "name": "Embeddings Google Gemini1"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "Du bist ein KI-Assistent zur Beantwortung von Fragen zu gespeicherten Angeboten.\n\nAUFGABE\nBeantworte Nutzerfragen anhand der Originalangebote, die im verbundenen Vector Store gespeichert sind.\n\nREGELN\n- Durchsuche für jede inhaltliche Frage zu den Angeboten die verbundene Wissensdatenbank.\n- Verwende ausschließlich Informationen aus den gefundenen Dokumenten.\n- Erfinde keine Anbieter, Preise, Leistungen oder Angebotsbedingungen.\n- Unterscheide eindeutig zwischen dokumentierten Fakten und fachlichen Einschätzungen.\n- Wenn Informationen fehlen oder nicht eindeutig sind, weise ausdrücklich darauf hin.\n- Vergleiche Angebote nur, wenn sie fachlich ausreichend vergleichbar sind.\n- Stelle unverbindliche Preisangaben nicht als verbindliche Festpreise dar.\n- Nenne die Quelle, sofern entsprechende Metadaten verfügbar sind.\n- Wenn keine passenden Informationen gefunden werden, sage dies ausdrücklich.\n\nAntworte sachlich, verständlich und auf Deutsch."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -1232,
+        -1008
+      ],
+      "id": "ea826142-f58b-4e4b-8ed6-3fa6b2257ded",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -1232,
+        -832
+      ],
+      "id": "50e8058b-ce7b-45a7-bae5-97f4a6fa9b99",
+      "name": "Google Gemini Chat Model2"
+    },
+    {
+      "parameters": {
+        "content": "KI-Chat mit Zugriff auf den RAG-Speicher \"M25_Angebote\"",
+        "height": 672,
+        "width": 720,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1536,
+        -1056
+      ],
+      "typeVersion": 1,
+      "id": "854e9a19-43ec-4bb6-8a0a-94ca83a3d8f2",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "KI-basierter Angebotsvergleich",
+        "height": 512,
+        "width": 1536,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -736,
+        -1056
+      ],
+      "typeVersion": 1,
+      "id": "a51250ab-5d97-4d44-992f-168d8848d71c",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "Workflow zur Verarbeitung von Angeboten im PDF, DOCX und PNG-Format inkl. KI-Auswertung und Speicherung in Notion-Datenbank",
+        "height": 960,
+        "width": 3104,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1536,
+        -352
+      ],
+      "typeVersion": 1,
+      "id": "54b8082b-2208-4d2b-a3ad-ccfa891f52b8",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "Erfolgreich",
+            "NotionID": "={{ $json.id }}",
+            "Angebotsposition": "={{ $('Code in JavaScript - Aufteilung Positionen').item.json.leistung }}",
+            "Dateiname": "={{ $('Code in JavaScript - Aufteilung Positionen').item.json.dateiname }}",
+            "DateiHash": "={{ $('Code in JavaScript - Aufteilung Positionen').item.json.dateiHash }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Dateiname",
+              "displayName": "Dateiname",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Angebotsposition",
+              "displayName": "Angebotsposition",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Fehlergrund",
+              "displayName": "Fehlergrund",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "NotionID",
+              "displayName": "NotionID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "DateiHash",
+              "displayName": "DateiHash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1360,
+        96
+      ],
+      "id": "ee977e2c-4f89-45d6-8302-a5e38810973f",
+      "name": "Insert row - Erfolgreich"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "Fehler",
+            "Dateiname": "={{ $('Code in JavaScript - Aufteilung Positionen').item.json.dateiname }}",
+            "Angebotsposition": "={{ $('Code in JavaScript - Aufteilung Positionen').item.json.leistung }}",
+            "Fehlergrund": "={{ $json.error?.message || $json.error || $json.message || 'Notion-Speicherung fehlgeschlagen' }}",
+            "DateiHash": "={{ $('Code in JavaScript - Aufteilung Positionen').item.json.dateiHash }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Dateiname",
+              "displayName": "Dateiname",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Angebotsposition",
+              "displayName": "Angebotsposition",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Fehlergrund",
+              "displayName": "Fehlergrund",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "NotionID",
+              "displayName": "NotionID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "DateiHash",
+              "displayName": "DateiHash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1360,
+        272
+      ],
+      "id": "efe73732-b4f2-4fe1-a64e-6600caa50ad6",
+      "name": "Insert row - Fehler"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list"
+        },
+        "returnAll": true,
+        "simple": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        -432,
+        176
+      ],
+      "id": "911fadcd-a875-40b9-af70-5aefb082a2e1",
+      "name": "Notion - Duplikatsprüfung",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst dateien = $('Merge').all();\nconst notionDaten = $input.all();\n\nconst gespeicherteHashes = new Set();\nconst bereitsGeprueft = new Set();\n\n// Vorhandene SHA-256-Hashwerte aus Notion lesen\nfor (const item of notionDaten) {\n  const seite = item.json;\n\n  // Leere Notion-Datenbank\n  if (!seite || Object.keys(seite).length === 0) {\n    continue;\n  }\n\n  const eigenschaft = seite.properties?.DateiHash;\n\n  if (!eigenschaft || !Array.isArray(eigenschaft.rich_text)) {\n    throw new Error(\"Notion-DateiHash fehlt oder ist ungültig.\");\n  }\n\n  const hash = eigenschaft.rich_text\n    .map(eintrag =>\n      eintrag.plain_text ?? eintrag.text?.content ?? \"\"\n    )\n    .join(\"\")\n    .trim()\n    .toLowerCase();\n\n  if (!hash) {\n    throw new Error(\"Ein Notion-Datensatz enthält keinen DateiHash.\");\n  }\n\n  gespeicherteHashes.add(hash);\n}\n\n// Originaldateien mit den Notion-Hashwerten vergleichen\nconst neueDateien = [];\n\nfor (const datei of dateien) {\n  const hash = String(datei.json.FileHash ?? \"\")\n    .trim()\n    .toLowerCase();\n\n  if (!hash) {\n    throw new Error(\"SHA-256-Hashwert der Datei fehlt.\");\n  }\n\n  if (gespeicherteHashes.has(hash) ||\n      bereitsGeprueft.has(hash)) {\n    continue;\n  }\n\n  bereitsGeprueft.add(hash);\n\n  neueDateien.push({\n    json: datei.json,\n    binary: datei.binary,\n    pairedItem: { item: 0 }\n  });\n}\n\nreturn neueDateien;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        176
+      ],
+      "id": "211892a4-f9c9-40ff-993d-58c0742c2893",
+      "name": "Hash-Abgleich mit Notion"
+    }
+  ],
+  "connections": {
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "DOCX to Text",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Analyze an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Crypto",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze an image": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DOCX to Text": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript - Aufteilung Positionen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript - Aufteilung Positionen": {
+      "main": [
+        [
+          {
+            "node": "Create a database page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get many database pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many database pages": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript - Angebotspos zusammenfassen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent-Vergleich",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript - Angebotspos zusammenfassen": {
+      "main": [
+        [
+          {
+            "node": "AI Agent-Vergleich",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent-Vergleich",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent-Vergleich": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Create a database Angebotsvergleich",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crypto": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Notion - Duplikatsprüfung",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Simple Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Simple Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Simple Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Vector Store1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Simple Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a database page": {
+      "main": [
+        [
+          {
+            "node": "Insert row - Erfolgreich",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insert row - Fehler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion - Duplikatsprüfung": {
+      "main": [
+        [
+          {
+            "node": "Hash-Abgleich mit Notion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hash-Abgleich mit Notion": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  }
+}
