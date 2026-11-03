@@ -1,9 +1,5 @@
 # KI-gestützte Angebotserfassung mit Protokollierung und Fehlerbehandlung
 
-**Weiterbildung:** KI-Integrationsmanager (IHK)  
-**Modul:** M25 – Lerneinheit 07  
-**Aufgabe:** Erweiterung eines bestehenden n8n-Workflows
-
 ## 1. Kurzbeschreibung
 
 Der n8n-Workflow automatisiert die Erfassung und Auswertung von Angeboten in einem Unternehmen.
@@ -12,7 +8,7 @@ Angebote im PDF-, DOCX- und PNG-Format werden aus einem überwachten Ordner eing
 
 Zusätzlich ermöglicht der Workflow einen KI-gestützten Angebotsvergleich sowie die Abfrage gespeicherter Dokumentinhalte über einen KI-Chat mit RAG-Technologie.
 
-**Erweiterung in Lerneinheit 07:** Die Angebotserfassung wurde um eine Protokollierung erfolgreicher und fehlgeschlagener Notion-Speichervorgänge sowie eine gezielte Fehlerbehandlung ergänzt.
+**Erweiterung:** Die Angebotserfassung wurde um eine Protokollierung erfolgreicher und fehlgeschlagener Notion-Speichervorgänge sowie eine gezielte Fehlerbehandlung ergänzt.
 
 ## 2. Ziel und Nutzen
 
@@ -31,7 +27,7 @@ Konkrete Zeit- oder Kosteneinsparungen wurden bisher nicht gemessen.
 
 ## 3. Beschreibung der Erweiterung
 
-Der ursprüngliche Workflow aus Lerneinheit 06 wurde um folgende Funktionen erweitert:
+Der ursprüngliche Workflow wurde um folgende Funktionen erweitert:
 
 ### 3.1 Protokollierung
 
