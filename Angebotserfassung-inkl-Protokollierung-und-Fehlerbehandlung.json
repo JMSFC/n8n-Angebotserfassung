@@ -462,7 +462,7 @@
     },
     {
       "parameters": {
-        "fileSelector": "/files/M25_Dateitypentest/*",
+        "fileSelector": "/files/*",
         "options": {}
       },
       "type": "n8n-nodes-base.readWriteFile",
