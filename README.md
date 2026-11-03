@@ -215,6 +215,8 @@ Die neue Fehlerprotokollierung erfasst Notion-Speicherfehler, jedoch nicht sämt
 
 Bei einer nur teilweise erfolgreichen Angebotsspeicherung kann die bestehende Hashwert-Prüfung eine automatische erneute Verarbeitung verhindern. Solche Fälle müssen anhand der Protokolle kontrolliert und gegebenenfalls manuell korrigiert werden.
 
+Vorhandene Notion-Datensätze ohne DateiHash können zum Abbruch der Duplikatsprüfung führen. Solche Datensätze müssen vor der Verarbeitung geprüft und gegebenenfalls bereinigt werden.
+
 Der verwendete Simple Vector Store speichert Daten nur im Arbeitsspeicher. Bei einem Neustart von n8n gehen diese Daten verloren. Aufgrund der Duplikatsprüfung werden bereits in Notion erfasste Dateien nicht automatisch erneut in den Vektorspeicher aufgenommen.
 
 **Für einen dauerhaften produktiven Unternehmenseinsatz wäre deshalb ein persistenter Vektorspeicher sowie ein geregeltes Wiederherstellungs- und Fehlerbehandlungsverfahren erforderlich.**
