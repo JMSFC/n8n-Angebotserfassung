@@ -217,7 +217,7 @@ Bei einer nur teilweise erfolgreichen Angebotsspeicherung kann die bestehende Ha
 
 Der verwendete Simple Vector Store speichert Daten nur im Arbeitsspeicher. Bei einem Neustart von n8n gehen diese Daten verloren. Aufgrund der Duplikatsprüfung werden bereits in Notion erfasste Dateien nicht automatisch erneut in den Vektorspeicher aufgenommen.
 
-**Für einen dauerhaften produktiven Unternehmenseinsatz wäre deshalb ein persistenter Vektorspeicher sowie ein geregeltes Wiederherstellungs- und Fehlerbehandlungsverfahren erforderlich.** Für die vorliegende Übungsaufgabe bleibt der bestehende Workflow unverändert.
+**Für einen dauerhaften produktiven Unternehmenseinsatz wäre deshalb ein persistenter Vektorspeicher sowie ein geregeltes Wiederherstellungs- und Fehlerbehandlungsverfahren erforderlich.**
 
 ## 10. Menschliche Kontrolle
 
