@@ -321,11 +321,11 @@ Die Tests belegen die geprüften Funktionen, jedoch keine vollständige Produkti
    - `NotionID`
    - `DateiHash`
 5. Die Protokollierungs-Nodes mit dieser Data Table verbinden.
-6. Den Zugriff auf den Dateiordner sicherstellen. In der verwendeten lokalen Docker-Umgebung wird folgender Ordner genutzt:
+6. Den Zugriff auf den Dateiordner sicherstellen. In der verwendeten lokalen Docker-Umgebung wird folgende Ordnerzuordnung genutzt:
 
-   Windows: `C:\TEMP\_n8n-files\M25_Dateitypentest\`
+   Windows: `C:\TEMP\_n8n-files\`
 
-   n8n-Container: `/files/M25_Dateitypentest/`
+   n8n-Container: `/files/`
 
    Der Windows-Ordner muss über die Docker-Konfiguration im Container unter `/files` verfügbar sein.
 7. Den Simple Vector Store mit dem Speicher-Schlüssel `M25_Angebote` verwenden und die erforderlichen Gemini-Embeddings zuordnen.
